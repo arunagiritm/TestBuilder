@@ -3,17 +3,10 @@ var path = require('path');
 var beautify = require('js-beautify').js_beautify;
 require('./string.extensions.js');
 var wf = require('./writefactories');
-var balanced = require('balanced-match');
 var depArray;
 var depfuncontent;
 var depType;
 var directiveName;
-var isAMD = true;
-var jasmineTemplateFile = "./server/template/jasmineTemplate.js";
-var jasmineCmnTemplateFile = "./server/template/jasmineComnTemplate.js";
-var amdTemplateFile = "./server/template/amdTemplate.js";
-var scopeTemplateFile = "./server/template/scopeItsTemplate.js"
-
 global.define = function(filename, callback) {
     depType = "";
     callback(mycontroller);
@@ -28,11 +21,9 @@ global.mycontroller = {
         }
         if (typeof inputArray != 'undefined') {
 
-            //dependecy not annotated
             if (typeof inputArray == 'function') {
                 depfuncontent = inputArray;
-                var bfind = balanced("(", ")", depfuncontent.toString().match(/function\s*\([^\)]*\s*\)/g)[0]);
-                depArray = bfind.body.split(",");
+                depArray = null;
             } else {
                 //Last parameter is the function content
                 depfuncontent = inputArray[inputArray.length - 1];
@@ -70,26 +61,10 @@ global.mycontroller = {
 var getDependencies = function(funObject, callback) {
 
     var dtStamp = new Date().getTime().toString();
-    var foldername = path.join(__dirname, "../AngularSrc");
+    var foldername = path.join(__dirname, "/specs");
     dtStamp = "";
     //Add datetimestamp to invalidate cache
     var fname = path.join(foldername, funObject.filename).replace(".js", dtStamp + ".js");
-
-    //Remove the commented lines
-    funObject.fileContent = funObject.fileContent.replace(/\s\/\/.*/g, "");
-    funObject.fileContent = funObject.fileContent.replace(/\/\*(.|[\r\n])*?\*\//g, ""); //multiline comments
-    //Check whether it is amd module or commonJs
-    if (!funObject.fileContent.match(/define\s*\(/)) {
-        isAMD = false;
-        var start = funObject.fileContent.search(/.(controller|factory|service|provider|directive|config)\s*\(/g);
-        var angContent = funObject.fileContent.substring(start);
-        var bfind = balanced("(", ")", angContent);
-        if (bfind) {
-            var atemplate = fs.readFileSync(amdTemplateFile).toString();
-            var fullCode = bfind.pre + "(" + bfind.body + ")";
-            funObject.fileContent = atemplate.replace("{actualcode}", fullCode);
-        }
-    }
 
     fs.writeFileSync(fname, funObject.fileContent);
     depArray = "";
@@ -165,7 +140,7 @@ var getDirectiveObject = function(fcontent, directiveName) {
 }
 var buildDirectiveItStaments = function(dirObject) {
     //call builDirectiveScope to build isolated scope its of a directive
-    var scopeTemplate = fs.readFileSync(scopeTemplateFile).toString();
+    var scopeTemplate = fs.readFileSync('./server/template/scopeItsTemplate.js').toString();
     var scopeIts = "";
     scopeIts = scopeIts.AppendLine(buildDirectiveScopeIts(dirObject, scopeTemplate));
     scopeIts = scopeIts.AppendLine(buildDirectiveReplaceIts(dirObject, scopeTemplate));
@@ -226,25 +201,26 @@ var buildDirectiveScopeIts = function(dirObject, scopeTemplate) {
     return dirScopeIts;
 }
 var buildServiceMock = function() {
-    var scopeTemplate = fs.readFileSync(scopeTemplateFile).toString();
+    var scopeTemplate = fs.readFileSync('../server/template/scopeItsTemplate.js').toString();
     var scopeIts = "";
     var serMock = scopeTemplate.match(/\/\/httpMockMethod(.(\r|\n)*)*?End/)[0].replace(/\/\/.*/g, "");
-    scopeIts = scopeIts.AppendLine(serMock);
+    scopeIts=scopeIts.AppendLine(serMock);
     return scopeIts;
 }
 
 var buildServiceIts = function() {
-    var scopeTemplate = fs.readFileSync(scopeTemplateFile).toString();
+    var scopeTemplate = fs.readFileSync('../server/template/scopeItsTemplate.js').toString();
     var scopeIts = "";
-    var serviceIts = scopeTemplate.match(/\/\/ServiceIt(.(\r|\n)*)*?End/)[0].replace(/\/\/.*/g, "");
+    var serviceIts=scopeTemplate.match(/\/\/ServiceIt(.(\r|\n)*)*?End/)[0].replace(/\/\/.*/g, "");
     return serviceIts;
 }
 var getallFunctions = function(fcontent) {
     //get the content of the file and do a regex search
     //for scope object and constructor functions
     var fcontentString = fcontent.toString();
-
-    var scopeRegex = /([\w.]+)\s*(=|:)\s*function\s*\(.*\)/gi;
+    // var scopeRegStr = "\\$scope.*function\\s*\\(.*\\)";
+    var scopeRegStr = "([\\w.]+)\\s*(=|:)\\sfunction\\s*\\(.*\\)";
+    var scopeRegex = new RegExp(scopeRegStr, "gi");
     var vmRegex = /\w+\s*=\s*this\s*;/gi;
     var depMethods = {};
     var functionName;
@@ -254,11 +230,13 @@ var getallFunctions = function(fcontent) {
     var vmStr = "";
 
     //console.log(fcontent);
-    //check whether controller as syntax is used to assign "this" to local variable
+    //check whether controller as syntax is used to assign this to local variable
     var vmMatch = fcontentString.match(vmRegex);
     if (vmMatch) {
         var vmStr = vmMatch[0].trim();
         vmStr = vmStr.substring(0, vmStr.indexOf("="));
+        // scopeRegStr = scopeRegStr.replace("\\$scope", vmStr);
+        // scopeRegex = new RegExp(scopeRegStr, "gi");
     }
     var scopeMethods = fcontentString.match(scopeRegex);
     if (scopeMethods != null && scopeMethods.length > 0) {
@@ -306,12 +284,12 @@ var getFunctionArguments = function(func) {
 
 }
 var createTestSpec = function(filename, depArray, depMethods, dirObject) {
-    var tplFile = fs.readFileSync((isAMD) ? jasmineTemplateFile : jasmineCmnTemplateFile);
+    var tplFile = fs.readFileSync('../server/template/jasmineTemplate.js');
     var depStr;
     //Define all template replace variable and intialize
     var globalvariables = "",
         maindescribe = "",
-        modulename = "he",
+        modulename = "",
         depFunctions = "",
         depFunctionsIntialize = "",
         depControllerIntialize = "",
@@ -319,7 +297,7 @@ var createTestSpec = function(filename, depArray, depMethods, dirObject) {
         fname = path.basename(filename, path.extname(filename)),
         destName = filename.replace("AngularSrc", "specs").replace(".js", ".spec.js"),
         thatRegex = /that.+\./gi,
-        httpBackend = (fname.match(/service/gi)) ? "$httpBackend.whenGET(/.*(\.json|\.html)/gi).respond(200, {})" : "",
+        httpBackend = (fname.match(/service/gi)) ? "$httpBackend.whenGET(/.*(.json|.html)/gi).respond(200, {})" : "",
         afterEach = "",
         directive = "",
         dirName = "";
@@ -327,7 +305,7 @@ var createTestSpec = function(filename, depArray, depMethods, dirObject) {
 
     globalvariables = "var " + fname + ",";
     maindescribe = fname.replace("//", "#");
-    // modulename = "he";
+    modulename = "he";
     depFunctions = "";
     if (httpBackend.length > 0) {
         afterEach = afterEach.AppendLine("$httpBackend.verifyNoOutstandingExpectation();");
@@ -347,7 +325,7 @@ var createTestSpec = function(filename, depArray, depMethods, dirObject) {
         globalvariables = "var " + fname + ","; //overwrite as we want the mock method above variable declaration
         globalvariables = globalvariables.AppendLine("scope,");
         globalvariables = globalvariables.AppendLine("$httpBackend,");
-
+        
     } else if (depType == "directive") {
         depFunctions = depFunctions.append("$rootScope,$compile,");
         depFunctionsIntialize = depFunctionsIntialize.AppendLine("scope = $rootScope.$new();");
@@ -372,10 +350,7 @@ var createTestSpec = function(filename, depArray, depMethods, dirObject) {
     //Loop through the dependecy array injected functions
     if (depArray != null) {
         for (deparr in depArray) {
-            depStr = depArray[deparr].toString().trim();
-            if (depStr == "") {
-                continue;
-            } //do not do for empty string
+            depStr = depArray[deparr].toString()
             globalvariables = globalvariables.AppendLine(depStr + ",");
 
             //If the dependcy starts with d then it is resolved in the route. 
@@ -392,10 +367,9 @@ var createTestSpec = function(filename, depArray, depMethods, dirObject) {
             }
 
         }
-        depControllerIntialize = depControllerIntialize.AppendLine("})");
     }
-    globalvariables = globalvariables.trim().endsWithRemove("\n").endsWithRemove(",").append(";");
-    depFunctions = depFunctions.trim().endsWithRemove("\n").endsWithRemove(",");
+    globalvariables = globalvariables.trim().endsWithRemove(",").append(";");
+    depFunctions = depFunctions.trim().endsWithRemove(",");
 
 
 
@@ -416,13 +390,13 @@ var createTestSpec = function(filename, depArray, depMethods, dirObject) {
     }
     if (depType != directive) {
         if (depMethods != null) {
-            var serviceIts = buildServiceIts();
+            var serviceIts=buildServiceIts();
             //Loop through all the methods defined in angular services
             //and create jasmine it statements for them
             for (depmthd in depMethods) {
                 itStatements = itStatements.AppendLine("");
                 if (depType == "service") {
-                    itStatements = itStatements.AppendLine(serviceIts.replace(/{serviceMethod}/g, depmthd));
+                   itStatements=itStatements.AppendLine(serviceIts.replace(/{serviceMethod}/g, depmthd));
                 } else {
                     itStatements = itStatements.AppendLine("it('should call " + depmthd + "', function(){");
                     //itStatements.AppendLine(""+depMethods[depmthd]+ "= mockdata."+ depmthd +");" );

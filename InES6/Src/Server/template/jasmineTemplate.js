@@ -1,4 +1,4 @@
-define(['jQuery','angular', 'angular-mocks'], function($) {
+define(['jQuery','angular', 'angular-mock'], function($) {
 
 //Declare all global variables here
 {globalvariables}

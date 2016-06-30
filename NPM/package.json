@@ -1,0 +1,11 @@
+{
+  "name": "jamine-test-builder",
+  "version": "1.0.0",
+  "description": "NPM package to build jasmine test for angular 1.x",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Arunagiri TM",
+  "license": "ISC"
+}

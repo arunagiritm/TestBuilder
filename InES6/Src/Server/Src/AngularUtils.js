@@ -9,10 +9,10 @@ var depfuncontent;
 var depType;
 var directiveName;
 var isAMD = true;
-var jasmineTemplateFile = "./server/template/jasmineTemplate.js";
-var jasmineCmnTemplateFile = "./server/template/jasmineComnTemplate.js";
-var amdTemplateFile = "./server/template/amdTemplate.js";
-var scopeTemplateFile = "./server/template/scopeItsTemplate.js"
+var jasmineTemplateFile = "./src/server/template/jasmineTemplate.js";
+var jasmineCmnTemplateFile = "./src/server/template/jasmineComnTemplate.js";
+var amdTemplateFile = "./src/server/template/amdTemplate.js";
+var scopeTemplateFile = "./src/server/template/scopeItsTemplate.js"
 
 global.define = function(filename, callback) {
     depType = "";
@@ -76,7 +76,7 @@ var getDependencies = function(funObject, callback) {
     var fname = path.join(foldername, funObject.filename).replace(".js", dtStamp + ".js");
 
     //Remove the commented lines
-    funObject.fileContent = funObject.fileContent.replace(/\s\/\/.*/g, "");
+    funObject.fileContent = funObject.fileContent.replace(/\/\/.*/g, "");
     funObject.fileContent = funObject.fileContent.replace(/\/\*(.|[\r\n])*?\*\//g, ""); //multiline comments
     //Check whether it is amd module or commonJs
     if (!funObject.fileContent.match(/define\s*\(/)) {

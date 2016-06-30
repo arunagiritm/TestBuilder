@@ -9,10 +9,10 @@ var depfuncontent;
 var depType;
 var directiveName;
 var isAMD = true;
-var jasmineTemplateFile = "./server/template/jasmineTemplate.js";
-var jasmineCmnTemplateFile = "./server/template/jasmineComnTemplate.js";
-var amdTemplateFile = "./server/template/amdTemplate.js";
-var scopeTemplateFile = "./server/template/scopeItsTemplate.js"
+var jasmineTemplateFile = "./src/server/template/jasmineTemplate.js";
+var jasmineCmnTemplateFile = "./src/server/template/jasmineComnTemplate.js";
+var amdTemplateFile = "./src/server/template/amdTemplate.js";
+var scopeTemplateFile = "./src/server/template/scopeItsTemplate.js"
 
 global.define = function(filename, callback) {
     depType = "";
@@ -27,7 +27,6 @@ global.mycontroller = {
             depType = "controller";
         }
         if (typeof inputArray != 'undefined') {
-
             //dependecy not annotated
             if (typeof inputArray == 'function') {
                 depfuncontent = inputArray;
@@ -74,11 +73,11 @@ var getDependencies = function(funObject, callback) {
     dtStamp = "";
     //Add datetimestamp to invalidate cache
     var fname = path.join(foldername, funObject.filename).replace(".js", dtStamp + ".js");
-
     //Remove the commented lines
-    funObject.fileContent = funObject.fileContent.replace(/\s\/\/.*/g, "");
+    funObject.fileContent = funObject.fileContent.replace(/\/\/.*/g, "");
     funObject.fileContent = funObject.fileContent.replace(/\/\*(.|[\r\n])*?\*\//g, ""); //multiline comments
     //Check whether it is amd module or commonJs
+
     if (!funObject.fileContent.match(/define\s*\(/)) {
         isAMD = false;
         var start = funObject.fileContent.search(/.(controller|factory|service|provider|directive|config)\s*\(/g);
@@ -90,7 +89,6 @@ var getDependencies = function(funObject, callback) {
             funObject.fileContent = atemplate.replace("{actualcode}", fullCode);
         }
     }
-
     fs.writeFileSync(fname, funObject.fileContent);
     depArray = "";
     depfuncontent = "";
@@ -243,7 +241,7 @@ var getallFunctions = function(fcontent) {
     //get the content of the file and do a regex search
     //for scope object and constructor functions
     var fcontentString = fcontent.toString();
-
+    
     var scopeRegex = /([\w.]+)\s*(=|:)\s*function\s*\(.*\)/gi;
     var vmRegex = /\w+\s*=\s*this\s*;/gi;
     var depMethods = {};

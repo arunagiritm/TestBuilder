@@ -1,0 +1,44 @@
+  <div id=" container" >
+          <header>
+              <div id='logo'>
+              Angular Test Builder
+              </div>
+    
+          </header>
+            <section id="contentLeft">
+                <div id="cLeft">
+                <label for="txtjson" >Select the Angular Script File</label>
+                <input type="text" id="txtjson" placeholder="Script File" ng-model="vm.filename">
+                <input type="button" value="..." id="btnJson" ng-click="vm.readFile()">
+                <input type="file" id="fileJson" fileread="vm.fileread" filename="vm.filename" multiple  accept=".js" >
+                </div>
+                <div id="cLeft">
+                <label for="txtoutput" >Select Output Foler&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp </label>
+                <input type="text" id="txtoutput" placeholder="Output Folder">
+                <input type="button" value="..." id="btnJson">
+                <input type="file" id="fileoutput">
+                <a href="JasmineSpecs.zip" ng-show="vm.genFileShow" download target="_blank">Jasmine Specs</a>
+                </div>
+                <div id="cProgress" ng-show="vm.PbarShow" >
+                    <div class="progress" id="pbar">
+                      <div  class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+                        
+                      </div>
+                    </div>
+                </div>
+                <div class ="row" id="cbuttons">
+                    <div class="col-md-6">
+                    <button type="button"  class="btn btn-primary" ng-click="vm.populate()">Create Specs</button>
+                    </div>
+                    <!-- <button type="button"  class="btn btn-primary" ng-click="createFactories()">Create Spec Files</button> -->
+                    <div class="col-md-6">
+                        <button type="button"  class="btn btn-primary" ng-click="vm.close()">Close</button>
+                    </div>
+                </div>
+             
+            </section>
+            </div>
+            <footer>
+               
+            </footer>
+        </div>
